@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Threading;
 using Microsoft.Data.SqlClient;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace Product_Manager
 {
     class Program
     {
         const string connectionString =
-            "Data Source=(local);Initial Catalog=assignment_1;"
+            "Data Source=(local);Initial Catalog=Product_Manager;"
             + "Integrated Security=true";
 
         static void Main(string[] args)
@@ -64,7 +65,7 @@ namespace Product_Manager
         {
             Console.Clear();
 
-            string[] menuItems = { "1. Add category", "2. List", "3. Go to main menu" };
+            string[] menuItems = { "1. Add category", "2. List categories", "3. Go to main menu" };
 
             foreach (var menuItem in menuItems)
             {
@@ -80,11 +81,11 @@ namespace Product_Manager
                 switch (input.Key)
                 {
                     case ConsoleKey.D1:
-                       
+                        AddCategorySubMenu();
                         break;
 
                     case ConsoleKey.D2:
-                        
+                        ListCategoriesSubMenu();
                         break;
 
                     case ConsoleKey.D3:
@@ -95,7 +96,34 @@ namespace Product_Manager
             }
         }
 
-        
+        public static void AddCategorySubMenu() 
+        {
+            Console.Clear();
+
+            Console.WriteLine("Name:");
+
+            Console.SetCursorPosition(7,0);
+            string categoryInput;
+
+            categoryInput = Console.ReadLine();
+
+
+            if (YesOrNo()) 
+            {
+                
+            }
+            else 
+            {
+                AddCategorySubMenu();
+                
+            }
+
+        }
+
+        public static void ListCategoriesSubMenu() 
+        {
+            
+        }
         public static void ArticlesSubMenu()
         {
             Console.Clear();
