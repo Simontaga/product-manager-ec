@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.Common;
-using System.Data.SqlTypes;
 using System.Threading;
+using Microsoft.Data.SqlClient;
 
 namespace Product_Manager
 {
@@ -19,20 +16,91 @@ namespace Product_Manager
 
             while (applicationRunning)
             {
+
                 
                 MainMenu();
-
 
             }
         }
 
-    
+        public static void MainMenu() 
+        {
 
-        public static void MainMenu()
+            Console.Clear();
+
+            string[] menuItems = { "1. Categories", "2. Articles", "3. Exit" };
+
+            foreach (var menuItem in menuItems)
+            {
+                Console.WriteLine(menuItem);
+            }
+
+            bool validInput = false;
+            ConsoleKeyInfo input;
+            while (!validInput)
+            {
+                input = Console.ReadKey(true);
+
+                switch (input.Key)
+                {
+                    case ConsoleKey.D1:
+                        CategoriesSubMenu();
+                        break;
+
+                    case ConsoleKey.D2:
+                        ArticlesSubMenu();
+                        break;
+
+                    case ConsoleKey.D3:
+                        Exit();
+                        break;
+                }
+
+            }
+
+        }
+
+        public static void CategoriesSubMenu() 
         {
             Console.Clear();
 
-            string[] menuItems = { "1. Add article", "2. Search Article","3. Exit"};
+            string[] menuItems = { "1. Add category", "2. List", "3. Go to main menu" };
+
+            foreach (var menuItem in menuItems)
+            {
+                Console.WriteLine(menuItem);
+            }
+
+            bool validInput = false;
+            ConsoleKeyInfo input;
+            while (!validInput)
+            {
+                input = Console.ReadKey(true);
+
+                switch (input.Key)
+                {
+                    case ConsoleKey.D1:
+                       
+                        break;
+
+                    case ConsoleKey.D2:
+                        
+                        break;
+
+                    case ConsoleKey.D3:
+                        MainMenu();
+                        break;
+                }
+
+            }
+        }
+
+        
+        public static void ArticlesSubMenu()
+        {
+            Console.Clear();
+
+            string[] menuItems = { "1. Add article", "2. Search Article","3. Go to main menu"};
 
             foreach (var menuItem in menuItems)
             {
@@ -55,9 +123,9 @@ namespace Product_Manager
                         SearchArticleMenu();
                         break;
 
-                    case ConsoleKey.D3:
-                        Exit();
-                        break;
+                   case ConsoleKey.D3:
+                        MainMenu();
+                       break;
                 }
 
             }
@@ -108,7 +176,7 @@ namespace Product_Manager
                 AddArticleMenu();
             }
 
-            MainMenu();
+            ArticlesSubMenu();
 
         }
 
@@ -138,17 +206,16 @@ namespace Product_Manager
 
             
             bool matchFound = false;
-
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
+          
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
 
                 try
                 {
                     connection.Open();
 
-                  
-                    SqlCommand check_article_exists = new SqlCommand("SELECT article_number FROM products WHERE ([article_number] = @art_num)",connection);
+
+                    SqlCommand check_article_exists = new SqlCommand("SELECT article_number FROM products WHERE ([article_number] = @art_num)", connection);
                     check_article_exists.Parameters.AddWithValue("@art_num", articleNumber);
                     SqlDataReader reader = check_article_exists.ExecuteReader();
                     if (reader.HasRows)
@@ -196,6 +263,7 @@ namespace Product_Manager
                 Thread.Sleep(2000);
             }
 
+            ArticlesSubMenu();
         }
 
         public static void SearchArticleFoundMenu(string articleNumber) 
@@ -226,7 +294,7 @@ namespace Product_Manager
                 switch (input.Key)
                 {
                     case ConsoleKey.Escape:
-                        MainMenu();
+                        ArticlesSubMenu();
                         break;
 
                     case ConsoleKey.E:
@@ -282,7 +350,7 @@ namespace Product_Manager
                 EditArticleMenu(articleNumber);
             }
 
-            MainMenu();
+            ArticlesSubMenu();
 
 
         }
@@ -297,7 +365,7 @@ namespace Product_Manager
 
                 Console.WriteLine("\nArticle deleted");
                 Thread.Sleep(2000);
-                MainMenu();
+                ArticlesSubMenu();
             }
             else
             {
