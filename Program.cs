@@ -65,7 +65,7 @@ namespace Product_Manager
         {
             Console.Clear();
 
-            string[] menuItems = { "1. Add category", "2. List categories", "3. Go to main menu" };
+            string[] menuItems = { "1. Add category", "2. List categories","3. Add product to category", "4. Go to main menu" };
 
             foreach (var menuItem in menuItems)
             {
@@ -89,6 +89,10 @@ namespace Product_Manager
                         break;
 
                     case ConsoleKey.D3:
+                        AddProductToCategoryMenu();
+                        break;
+
+                    case ConsoleKey.D4:
                         MainMenu();
                         break;
                 }
@@ -96,6 +100,59 @@ namespace Product_Manager
             }
         }
 
+        public static void AddProductToCategoryMenu() 
+        {
+            Console.Clear();
+
+            using (SqlConnection connection =
+            new SqlConnection(connectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                  "SELECT * FROM Categories",
+                  connection);
+
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+
+
+
+                if (reader.HasRows)
+                {
+                    Console.WriteLine("ID   Category                     Total products");
+                    Console.WriteLine("------------------------------------------------------------");
+
+
+                    while (reader.Read())
+                    {
+                        Console.WriteLine($"{ reader["CategoryID"]}    {reader["CategoryName"]}");
+                    }
+
+                    Console.Write("\nSelected ID >");
+                    string selectedIdInput = Console.ReadLine();
+                    int selectedIdNumber;
+                    try 
+                    {
+                        selectedIdNumber = int.Parse(selectedIdInput);
+                    }
+                    catch 
+                    {
+                        Console.WriteLine("Invalid input");
+                        Thread.Sleep(2000);
+                        CategoriesSubMenu();
+                    }
+
+
+
+                }
+                else
+                {
+                    Console.WriteLine("No rows found.");
+                }
+                reader.Close();
+                connection.Close();
+            }
+        }
         public static void AddCategorySubMenu() 
         {
             Console.Clear();
@@ -110,7 +167,51 @@ namespace Product_Manager
 
             if (YesOrNo()) 
             {
-                
+
+                if (doesCategoryExist(categoryInput))
+                {
+                    Console.WriteLine("\n \n   Category already exists.");
+                    Thread.Sleep(2000);
+                    CategoriesSubMenu();
+                }
+                else 
+                {
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+
+                    {
+
+                        try
+                        {
+                            connection.Open();
+
+
+
+                            string sql = "INSERT INTO Categories VALUES(@CategoryName)";
+
+
+                            SqlCommand insert_category = new SqlCommand(sql, connection);
+
+
+                            insert_category.Parameters.AddWithValue("@CategoryName", categoryInput);
+
+                            insert_category.ExecuteNonQuery();
+
+                            Console.WriteLine("\n \n   Category added");
+                            Thread.Sleep(2000);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+
+                        connection.Close();
+
+                        MainMenu();
+                    }
+                }
+
+               
             }
             else 
             {
@@ -120,9 +221,87 @@ namespace Product_Manager
 
         }
 
+        public static bool doesCategoryExist(string category)
+        {
+
+
+            bool matchFound = false;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+
+                try
+                {
+                    connection.Open();
+
+
+                    SqlCommand check_category_exists = new SqlCommand("SELECT CategoryName FROM Categories WHERE ([CategoryName] = @categoryName)", connection);
+                    check_category_exists.Parameters.AddWithValue("@categoryName", category);
+                    SqlDataReader reader = check_category_exists.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        matchFound = true;
+                        
+                    }
+                    else
+                    {
+                        matchFound = false;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                connection.Close();
+
+                return matchFound;
+            }
+
+
+
+        }
+
         public static void ListCategoriesSubMenu() 
         {
-            
+
+            Console.Clear();
+
+            using (SqlConnection connection =
+            new SqlConnection(connectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                  "SELECT * FROM Categories",
+                  connection);
+                
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+
+
+
+                if (reader.HasRows)
+                {
+                    Console.WriteLine("Category                     Total products");
+                    Console.WriteLine("------------------------------------------------------------");
+
+
+                    while (reader.Read())
+                    {
+
+
+                        Console.WriteLine(reader["CategoryName"]);
+
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No rows found.");
+                }
+                reader.Close();
+                connection.Close();
+            }
         }
         public static void ArticlesSubMenu()
         {
@@ -210,7 +389,7 @@ namespace Product_Manager
 
         public static void AddArticle(string articleNumber,string productName,string productDescription,int productPrice)
         {
-            string queryString = $"INSERT INTO products values('{articleNumber}','{productName}','{productDescription}',{productPrice});";
+            string queryString = $"INSERT INTO Products values('{articleNumber}','{productName}','{productDescription}',{productPrice});";
 
             
             if (doesArticleExist(articleNumber))
@@ -243,7 +422,7 @@ namespace Product_Manager
                     connection.Open();
 
 
-                    SqlCommand check_article_exists = new SqlCommand("SELECT article_number FROM products WHERE ([article_number] = @art_num)", connection);
+                    SqlCommand check_article_exists = new SqlCommand("SELECT article_number FROM Products WHERE ([article_number] = @art_num)", connection);
                     check_article_exists.Parameters.AddWithValue("@art_num", articleNumber);
                     SqlDataReader reader = check_article_exists.ExecuteReader();
                     if (reader.HasRows)
@@ -387,7 +566,7 @@ namespace Product_Manager
         {
             if (YesOrNo("Delete this article? (Y)es (N)o"))
             {
-                string queryString = $"DELETE FROM products WHERE article_number='{articleNumber}';";
+                string queryString = $"DELETE FROM Products WHERE article_number='{articleNumber}';";
 
                 ExecuteQuery(queryString);
 
@@ -418,7 +597,7 @@ namespace Product_Manager
             new SqlConnection(connectionString))
             {
                 SqlCommand command = new SqlCommand(
-                  "SELECT article_number, product_name,product_description,product_price FROM products WHERE ([article_number] = @art_num)",
+                  "SELECT article_number, product_name,product_description,product_price FROM Products WHERE ([article_number] = @art_num)",
                   connection);
                 command.Parameters.AddWithValue("@art_num", articleNumber);
                 connection.Open();
@@ -453,7 +632,7 @@ namespace Product_Manager
         public static void UpdateArticle(string articleNumber,string productName,string productDescription,int productPrice) 
         {
 
-            string queryString = @$"UPDATE products
+            string queryString = @$"UPDATE Products
             SET product_name = '{productName}', product_description = '{productDescription}',product_price = {productPrice}
             WHERE article_number = '{articleNumber}'; ";
 
@@ -488,14 +667,8 @@ namespace Product_Manager
                 try
                 {
                     connection.Open();
-                   
-                    SqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        Console.WriteLine("\t{0}\t{1}\t{2}",
-                            reader[0], reader[1], reader[2]);
-                    }
-                    reader.Close();
+                    command.ExecuteNonQuery();
+           
 
                 }
                 catch (Exception ex)
