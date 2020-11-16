@@ -65,7 +65,7 @@ namespace Product_Manager
         {
             Console.Clear();
 
-            string[] menuItems = { "1. Add category", "2. List categories", "3. Add product to category", "4. Go to main menu" };
+            string[] menuItems = { "1. Add category", "2. List categories", "3. Add product to category","4. Go to main menu" };
 
             foreach (var menuItem in menuItems)
             {
@@ -95,6 +95,7 @@ namespace Product_Manager
                     case ConsoleKey.D4:
                         MainMenu();
                         break;
+                  
                 }
 
             }
@@ -162,9 +163,9 @@ namespace Product_Manager
             }
         }
 
+       
 
 
-        
         public static int productCountCategory(string categoryID) 
         {
             int categoryIdNumber;
@@ -236,7 +237,7 @@ namespace Product_Manager
         {
             Console.Clear();
 
-            Console.Write("Search product: ");
+            Console.Write("Search product by name: ");
 
             string productToSearch = Console.ReadLine();
 
@@ -330,7 +331,9 @@ namespace Product_Manager
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Product is already in this category");
+                    Thread.Sleep(2000);
+                    MainMenu();
                 }
                 
                 
