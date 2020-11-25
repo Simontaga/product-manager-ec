@@ -2,6 +2,7 @@
 using System.Threading;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualBasic.CompilerServices;
+using Product_Manager.Domain.Models;
 
 namespace Product_Manager
 {
@@ -661,6 +662,8 @@ namespace Product_Manager
 
             int productPriceInputAsNumber;
 
+           
+
             if (Int32.TryParse(productPriceInput, out productPriceInputAsNumber))
             {
                
@@ -670,11 +673,13 @@ namespace Product_Manager
                 throw new ArgumentException("Invalid price, must be a number");
             }
 
+            Article article = new Article(ArticleNumber: artnumberInput, ArticleName: productNameInput, Description: productDescriptionInput, Price: productPriceInputAsNumber);
+
 
             if (YesOrNo())
             {
-                AddArticle(articleNumber:artnumberInput,productName:productNameInput,
-                productDescription:productDescriptionInput,productPrice:productPriceInputAsNumber);
+
+                AddArticle(article);
             }
             else
             {
@@ -685,12 +690,12 @@ namespace Product_Manager
 
         }
 
-        public static void AddArticle(string articleNumber,string productName,string productDescription,int productPrice)
-        {
-            string queryString = $"INSERT INTO Products values('{articleNumber}','{productName}','{productDescription}',{productPrice});";
+        public static void AddArticle(Article article)
+        {   
+            string queryString = $"INSERT INTO Products values('{article.ArticleNumber}','{article.ArticleName}','{article.Description}',{article.Price});";
 
             
-            if (doesArticleExist(articleNumber))
+            if (doesArticleExist(article.ArticleName))
             {
                 Console.WriteLine("Article already exists");
                
@@ -776,13 +781,13 @@ namespace Product_Manager
             Console.Clear();
 
 
-            ReturnFoundArticle(articleNumber, out articleNumber, out string productName, out string productDescription, out int productPrice);
+            ReturnFoundArticle(articleNumber, out Article article);
 
 
             Console.WriteLine($"Article number: {articleNumber}");
-            Console.WriteLine($"          Name: {productName}");
-            Console.WriteLine($"   Description: {productDescription}");
-            Console.WriteLine($"         Price: {productPrice}");
+            Console.WriteLine($"          Name: {article.ArticleName}");
+            Console.WriteLine($"   Description: {article.Description}");
+            Console.WriteLine($"         Price: {article.Price}");
 
 
 
@@ -843,12 +848,14 @@ namespace Product_Manager
             {
                 throw new ArgumentException("Invalid price, must be a number");
             }
-            
+
+
+            Article article = new Article(ArticleNumber: articleNumber, ArticleName: productNameInput, Description: productDescriptionInput, Price: productPriceInputAsNumber);
 
 
             if (YesOrNo())
             {             
-                UpdateArticle(articleNumber,productNameInput,productDescriptionInput,productPriceInputAsNumber);
+                UpdateArticle(article);
             }
             else
             {
@@ -878,17 +885,11 @@ namespace Product_Manager
             }
         }
 
-        public static void ReturnFoundArticle(string articleNumber,out string articleNumberFound,out string productNameFound,out string productDescriptionFound,out int productPriceFound)
+        public static void ReturnFoundArticle(string articleNumber,out Article article)
         {
 
-            //   string articleNumberFound;
-            //  string productNameFound;
-            // string productDescriptionFound;
-            // int productPriceFound;
-            articleNumberFound = "";
-            productNameFound = "";
-            productDescriptionFound = "";
-            productPriceFound = 0;
+            //Value needs to be assigned due to using out param
+            article = null;
 
 
             using (SqlConnection connection =
@@ -908,11 +909,15 @@ namespace Product_Manager
                 {
                     while (reader.Read())
                     {
-                       
-                        articleNumberFound = reader.GetString(0);
-                        productNameFound = reader.GetString(1);
-                        productDescriptionFound = reader.GetString(2);
-                        productPriceFound = reader.GetInt32(3);
+                        
+                   
+                        string articleNumberFound = reader.GetString(0);
+                        string productNameFound = reader.GetString(1);
+                        string productDescriptionFound = reader.GetString(2);
+                        int productPriceFound = reader.GetInt32(3);
+
+
+                        article = new Article(ArticleNumber: articleNumberFound, ArticleName: productNameFound, Description: productDescriptionFound, Price: productPriceFound);
 
 
                     }
@@ -927,12 +932,12 @@ namespace Product_Manager
         }
 
 
-        public static void UpdateArticle(string articleNumber,string productName,string productDescription,int productPrice) 
+        public static void UpdateArticle(Article article) 
         {
 
             string queryString = @$"UPDATE Products
-            SET product_name = '{productName}', product_description = '{productDescription}',product_price = {productPrice}
-            WHERE article_number = '{articleNumber}'; ";
+            SET product_name = '{article.ArticleName}', product_description = '{article.Description}',product_price = {article.Price}
+            WHERE article_number = '{article.ArticleNumber}'; ";
 
             try
             {
