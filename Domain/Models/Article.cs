@@ -15,13 +15,14 @@ namespace Product_Manager.Domain.Models
             this.Price = Price;
         }
 
-        public string ArticleNumber { get; }
+        public int Id { get; protected set; }
+        public string ArticleNumber { get; protected set; }
 
-        public string ArticleName { get; }
+        public string ArticleName { get; protected set; }
 
-        public string Description { get; }
+        public string Description { get; protected set; }
 
-        public int Price { get; }
+        public int Price { get; protected set; }
 
     }
 }

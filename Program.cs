@@ -2,16 +2,20 @@
 using System.Threading;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualBasic.CompilerServices;
+using Product_Manager.Data;
 using Product_Manager.Domain.Models;
+using System.Linq;
 
 namespace Product_Manager
 {
     class Program
     {
-        const string connectionString =
-            "Data Source=(local);Initial Catalog=Product_Manager;"
-            + "Integrated Security=true";
 
+        const string connectionString =
+        "Data Source=(local);Initial Catalog=Product_Manager;"
+        + "Integrated Security=true";
+
+        static ProductManagerContext Context = new ProductManagerContext();
         static void Main(string[] args)
         {
             bool applicationRunning = true;
@@ -242,6 +246,9 @@ namespace Product_Manager
 
             string productToSearch = Console.ReadLine();
 
+            // Article article = Context.Articles.Where(x => x.ArticleName.Contains(productToSearch));
+           // Article article = (Article)Context.Articles.Where(x => x.ArticleName.Contains(productToSearch));
+
             using (SqlConnection connection =
             new SqlConnection(connectionString))
             {
@@ -312,34 +319,17 @@ namespace Product_Manager
         public static void AddProductToCategory (int ProductID,int CategoryID)
         {
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                  "INSERT INTO ProductCategoryRelation VALUES(@ProductID,@CategoryID)",
-                  connection);
-                command.Parameters.AddWithValue("@CategoryID", CategoryID);
-                command.Parameters.AddWithValue("@ProductID", ProductID);
-                connection.Open();
+            ArticleCategoryRelation artCatRelation;
+  
+            Article article = Context.Articles.FirstOrDefault(x => x.Id == ProductID);
+            Category category = Context.Categories.FirstOrDefault(x => x.Id == CategoryID);
 
-                try
-                {
-                    command.ExecuteNonQuery();
+            artCatRelation = new ArticleCategoryRelation(article,category);
 
-                    Console.WriteLine("\n Product added to category");
-                    Thread.Sleep(2000);
-                    MainMenu();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Product is already in this category");
-                    Thread.Sleep(2000);
-                    MainMenu();
-                }
-                
-                
-                connection.Close();
-            }
+            Context.Add(artCatRelation);
+            Context.SaveChanges();
+
+            
         }
 
         public static string GetCategoryNameByID(int CategoryID) 
@@ -349,38 +339,13 @@ namespace Product_Manager
 
             string CategoryName = "";
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                  "SELECT CategoryName FROM Categories WHERE ([CategoryID] = @categoryID) ",
-                  connection);
-                command.Parameters.AddWithValue("@categoryID",CategoryID);
-                connection.Open();
+            Category category;
 
-                SqlDataReader reader = command.ExecuteReader();
+            category = Context.Categories.FirstOrDefault(x => x.Id == CategoryID);
 
 
 
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-
-                        CategoryName = (string)reader["CategoryName"];
-
-                        
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("No rows found.");
-                }
-                reader.Close();
-                connection.Close();
-            }
-
-            return CategoryName;
+            return category.CategoryName;
         }
 
         public static void AddCategorySubMenu() 
@@ -394,6 +359,7 @@ namespace Product_Manager
 
             categoryInput = Console.ReadLine();
 
+            Category category = new Category(categoryInput);
 
             if (YesOrNo()) 
             {
@@ -406,89 +372,39 @@ namespace Product_Manager
                 }
                 else 
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
 
-                    {
+                    Context.Add(category);
+                    Context.SaveChanges();
 
-                        try
-                        {
-                            connection.Open();
+                    Console.WriteLine("\n \n   Category added");
+                    Thread.Sleep(2000);
 
-
-
-                            string sql = "INSERT INTO Categories VALUES(@CategoryName)";
-
-
-                            SqlCommand insert_category = new SqlCommand(sql, connection);
-
-
-                            insert_category.Parameters.AddWithValue("@CategoryName", categoryInput);
-
-                            insert_category.ExecuteNonQuery();
-
-                            Console.WriteLine("\n \n   Category added");
-                            Thread.Sleep(2000);
-
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                        }
-
-                        connection.Close();
-
-                        MainMenu();
-                    }
                 }
 
-               
+                MainMenu();
+
+              
             }
-            else 
+            else
             {
                 AddCategorySubMenu();
-                
-            }
 
+            }
         }
 
         public static bool doesCategoryExist(string category)
         {
 
 
-            bool matchFound = false;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            if (Context.Categories.FirstOrDefault(x => x.CategoryName == category) != null)
             {
+                return true;
 
-                try
-                {
-                    connection.Open();
-
-
-                    SqlCommand check_category_exists = new SqlCommand("SELECT CategoryName FROM Categories WHERE ([CategoryName] = @categoryName)", connection);
-                    check_category_exists.Parameters.AddWithValue("@categoryName", category);
-                    SqlDataReader reader = check_category_exists.ExecuteReader();
-                    if (reader.HasRows)
-                    {
-                        matchFound = true;
-                        
-                    }
-                    else
-                    {
-                        matchFound = false;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-
-                connection.Close();
-
-                return matchFound;
             }
-
+            else
+            {
+                return false;
+            }
 
 
         }
@@ -496,43 +412,15 @@ namespace Product_Manager
         public static bool doesCategoryExist(int CategoryID)
         {
 
-
-            bool matchFound = false;
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            if (Context.Categories.FirstOrDefault(x => x.Id == CategoryID) != null) 
             {
+                return true;
 
-                try
-                {
-                    connection.Open();
-
-
-                    SqlCommand check_category_exists = new SqlCommand("SELECT CategoryName FROM Categories WHERE ([CategoryID] = @categoryID)", connection);
-                    check_category_exists.Parameters.AddWithValue("@categoryID", CategoryID);
-                    SqlDataReader reader = check_category_exists.ExecuteReader();
-                    if (reader.HasRows)
-                    {
-                        matchFound = true;
-
-                    }
-                    else
-                    {
-                        matchFound = false;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-
-                connection.Close();
-
-                return matchFound;
             }
-
-
-
+            else
+            {
+                return false;
+            }
         }
 
         public static void ListCategoriesSubMenu() 
@@ -674,7 +562,7 @@ namespace Product_Manager
             }
 
             Article article = new Article(ArticleNumber: artnumberInput, ArticleName: productNameInput, Description: productDescriptionInput, Price: productPriceInputAsNumber);
-
+                
 
             if (YesOrNo())
             {
@@ -691,64 +579,38 @@ namespace Product_Manager
         }
 
         public static void AddArticle(Article article)
-        {   
-            string queryString = $"INSERT INTO Products values('{article.ArticleNumber}','{article.ArticleName}','{article.Description}',{article.Price});";
-
-            
-            if (doesArticleExist(article.ArticleName))
+        {
+          
+            if (Context.Articles.FirstOrDefault(x=> x.ArticleNumber ==  article.ArticleNumber) != null) 
             {
                 Console.WriteLine("Article already exists");
-               
+
             }
-            else
+            else 
             {
-                ExecuteQuery(queryString);
-                Console.WriteLine("Article added");
-                 
+                Context.Add(article);
+                Context.SaveChanges();
             }
 
             Thread.Sleep(2000);
+
+
 
         }
 
         public static bool doesArticleExist(string articleNumber)
         {
 
-            
-            bool matchFound = false;
-          
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            if (Context.Articles.FirstOrDefault(x => x.ArticleNumber == articleNumber) != null)
             {
+                return true;
 
-                try
-                {
-                    connection.Open();
-
-
-                    SqlCommand check_article_exists = new SqlCommand("SELECT article_number FROM Products WHERE ([article_number] = @art_num)", connection);
-                    check_article_exists.Parameters.AddWithValue("@art_num", articleNumber);
-                    SqlDataReader reader = check_article_exists.ExecuteReader();
-                    if (reader.HasRows)
-                    {
-                        matchFound = true;
-                    }
-                    else
-                    {
-                        matchFound = false;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-
-                connection.Close();
-
-                return matchFound;
             }
-           
-           
+            else
+            {
+                return false;
+            }
+
 
         }
 
@@ -871,13 +733,17 @@ namespace Product_Manager
         {
             if (YesOrNo("Delete this article? (Y)es (N)o"))
             {
-                string queryString = $"DELETE FROM Products WHERE article_number='{articleNumber}';";
 
-                ExecuteQuery(queryString);
+                Article article = Context.Articles.FirstOrDefault(x => x.ArticleNumber == articleNumber);
 
+                Context.Remove(article);
                 Console.WriteLine("\nArticle deleted");
                 Thread.Sleep(2000);
                 ArticlesSubMenu();
+
+
+
+
             }
             else
             {
@@ -892,65 +758,34 @@ namespace Product_Manager
             article = null;
 
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                  "SELECT article_number, product_name,product_description,product_price FROM Products WHERE ([article_number] = @art_num)",
-                  connection);
-                command.Parameters.AddWithValue("@art_num", articleNumber);
-                connection.Open();
-
-                SqlDataReader reader = command.ExecuteReader();
-
-                
-
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        
-                   
-                        string articleNumberFound = reader.GetString(0);
-                        string productNameFound = reader.GetString(1);
-                        string productDescriptionFound = reader.GetString(2);
-                        int productPriceFound = reader.GetInt32(3);
+            article = Context.Articles.FirstOrDefault(x => x.ArticleNumber == articleNumber);
 
 
-                        article = new Article(ArticleNumber: articleNumberFound, ArticleName: productNameFound, Description: productDescriptionFound, Price: productPriceFound);
-
-
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("No rows found.");
-                }
-                reader.Close();
-                connection.Close();
-            }
         }
 
 
         public static void UpdateArticle(Article article) 
         {
 
-            string queryString = @$"UPDATE Products
-            SET product_name = '{article.ArticleName}', product_description = '{article.Description}',product_price = {article.Price}
-            WHERE article_number = '{article.ArticleNumber}'; ";
-
+            
             try
             {
-                ExecuteQuery(queryString);
+                Context.Update(article);
+                Context.SaveChanges();
 
                 Console.WriteLine("Article saved");
-                Thread.Sleep(2000);
+                
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-            
+
+
+            Thread.Sleep(2000);
+
+
+
         }
 
         public static void Exit()
@@ -958,30 +793,7 @@ namespace Product_Manager
             System.Environment.Exit(1);
         }
 
-        public static void ExecuteQuery(string queryString)
-        {
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
-            {
-
-             
-                SqlCommand command = new SqlCommand(queryString, connection);
-                
-                try
-                {
-                    connection.Open();
-                    command.ExecuteNonQuery();
-           
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-
-                connection.Close();
-            }
-        }
+    
         public static bool YesOrNo(string text = "\nIs this correct? (Y)es (N)o")
         {
             Console.WriteLine("\n" + text);
