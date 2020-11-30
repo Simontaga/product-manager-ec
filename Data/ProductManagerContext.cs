@@ -12,7 +12,6 @@ namespace Product_Manager.Data
 
         public DbSet<Category> Categories { get; set; }
 
-    //    public DbSet<ArticleCategoryRelation> ArticleCategory {get; set;}
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

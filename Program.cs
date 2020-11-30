@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.Data.SqlClient;
 using Microsoft.VisualBasic.CompilerServices;
 using Product_Manager.Data;
 using Product_Manager.Domain.Models;
@@ -11,9 +10,7 @@ namespace Product_Manager
     class Program
     {
 
-        const string connectionString =
-        "Data Source=(local);Initial Catalog=Product_Manager;"
-        + "Integrated Security=true";
+       
 
         static ProductManagerContext Context = new ProductManagerContext();
         static void Main(string[] args)
@@ -110,97 +107,71 @@ namespace Product_Manager
         {
             Console.Clear();
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
+            var categories = Context.Categories.ToList();
+
+
+            Console.WriteLine("ID   Category        Total products ");
+            Console.WriteLine("------------------------------------------------------------");
+
+            if (categories == null)
             {
-                SqlCommand command = new SqlCommand(
-                  "SELECT * FROM Categories",
-                  connection);
-
-                connection.Open();
-
-                SqlDataReader reader = command.ExecuteReader();
-
-
-
-                if (reader.HasRows)
-                {
-                    Console.WriteLine("ID   Category                     Total products");
-                    Console.WriteLine("------------------------------------------------------------");
-
-
-                    while (reader.Read())
-                    {
-                        Console.WriteLine($"{ reader["CategoryID"]}    {reader["CategoryName"]}");
-                    }
-
-                    Console.Write("\nSelected ID >");
-                    string selectedIdInput = Console.ReadLine();
-                    int selectedIdNumber;
-
-                    if (Int32.TryParse(selectedIdInput, out selectedIdNumber))
-                    {
-                        if (doesCategoryExist(selectedIdNumber))
-                        {
-                            AddCategoryToProduct(selectedIdNumber);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid input");
-                        Thread.Sleep(2000);
-                        CategoriesSubMenu();
-                    }
-
-
-
-
-
-
-
-                }
-                else
-                {
-                    Console.WriteLine("No rows found.");
-                }
-                reader.Close();
-                connection.Close();
+                Console.WriteLine("No rows found.");
+                Thread.Sleep(2000);
+                CategoriesSubMenu();
             }
+
+
+            foreach (var category in categories)
+            {
+                int productCount = productCountCategory(category.Id);
+
+
+               
+                Console.Write(category.Id);
+                Console.SetCursorPosition(5,Console.CursorTop);
+                Console.Write(category.CategoryName);
+                Console.SetCursorPosition(22,Console.CursorTop);
+                Console.Write(productCount);
+                Console.WriteLine("");
+
+            }
+
+            Console.Write("\nSelected ID >");
+            string selectedIdInput = Console.ReadLine();
+            int selectedIdNumber;
+
+            if (Int32.TryParse(selectedIdInput, out selectedIdNumber))
+            {
+
+                if (doesCategoryExist(selectedIdNumber))
+                {
+                    AddCategoryToProduct(selectedIdNumber);
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("Invalid input");
+                Thread.Sleep(2000);
+                CategoriesSubMenu();
+            }
+
         }
 
        
 
 
-        public static int productCountCategory(string categoryID) 
+        public static int productCountCategory(int categoryID) 
         {
-            int categoryIdNumber;
-        
 
-            categoryIdNumber = Int32.Parse(categoryID);
+            Category category = Context.Categories.FirstOrDefault(x => x.Id == categoryID);
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
-            {
+            var articles = Context.Articles.Where(x => x.Categories.Contains(category)).ToList().Count;
 
-                string query = $"SELECT COUNT(*) AS count FROM ProductCategoryRelation WHERE CategoryID = {categoryIdNumber}";
+            int count = articles;
 
-               
-                SqlCommand command = new SqlCommand(
-                  query,
-                  connection);
+            return count;
 
-
-
-         
-
-                connection.Open();
-
-                Int32 count = (Int32)command.ExecuteScalar();
-
-                connection.Close();
-
-                return count;
-            }
         }
 
 
@@ -246,72 +217,40 @@ namespace Product_Manager
 
             string productToSearch = Console.ReadLine();
 
-            // Article article = Context.Articles.Where(x => x.ArticleName.Contains(productToSearch));
-           // Article article = (Article)Context.Articles.Where(x => x.ArticleName.Contains(productToSearch));
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
+            var articleList = Context.Articles.Where(x => x.ArticleName.Contains(productToSearch)).ToList();
+             
+
+            if (articleList.Count == 0) 
             {
-                SqlCommand command = new SqlCommand(
-
-
-
-                  $"SELECT * FROM Products WHERE product_name LIKE '%{productToSearch}%'; ",
-                  connection);
-
-
-
-                //Fungerade ej.
-                //   command.Parameters.AddWithValue("@productToSearch", productToSearch);
-                connection.Open();
-
-                SqlDataReader reader = command.ExecuteReader();
-
-
-
-                if (reader.HasRows)
-                {
-                    Console.WriteLine("ID   Name");
-                    Console.WriteLine("-----------------------------------------------");
-
-                    while (reader.Read())
-                    {
-
-                        Console.WriteLine($"{reader["ProductID"]}   {reader["product_name"]}");
-
-                    }
-
-                    Console.Write("Product ID>");
-                    string chosenProductID = Console.ReadLine();
-
-                    int chosenProductIDNumber;
-
-                     if (Int32.TryParse(chosenProductID, out chosenProductIDNumber))
-                    {
-                        AddProductToCategory(ProductID:chosenProductIDNumber,CategoryID:CategoryID);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid input");
-                        Thread.Sleep(2000);
-                        SearchProductAddToCategory(CategoryID);
-                    }
-
-
-
-                   
-
-                   
-                }
-                else
-                {
-
-                    Console.WriteLine("No rows found.");
-                }
-                reader.Close();
-                connection.Close();
+                Console.WriteLine("No articles found");
+                Thread.Sleep(2000);
+                CategoriesSubMenu();
             }
 
+            Console.WriteLine("ID   Name");
+            Console.WriteLine("-----------------------------------------------");
+
+            foreach (var article in articleList) 
+            {
+                Console.WriteLine($"{article.Id}   {article.ArticleName}");
+            }
+
+            Console.Write("Product ID>");
+            string chosenProductID = Console.ReadLine();
+
+            int chosenProductIDNumber;
+
+            if (Int32.TryParse(chosenProductID, out chosenProductIDNumber))
+            {
+            AddProductToCategory(ProductID:chosenProductIDNumber,CategoryID:CategoryID);
+            }
+            else
+            {
+             Console.WriteLine("Invalid input");
+             Thread.Sleep(2000);
+             SearchProductAddToCategory(CategoryID);
+             }
 
 
         }
@@ -319,17 +258,15 @@ namespace Product_Manager
         public static void AddProductToCategory (int ProductID,int CategoryID)
         {
 
-            ArticleCategoryRelation artCatRelation;
-  
+
             Article article = Context.Articles.FirstOrDefault(x => x.Id == ProductID);
             Category category = Context.Categories.FirstOrDefault(x => x.Id == CategoryID);
 
-            artCatRelation = new ArticleCategoryRelation(article,category);
 
-            Context.Add(artCatRelation);
+            category.addArticle(article);
+            Context.Update(category);
             Context.SaveChanges();
-
-            
+     
         }
 
         public static string GetCategoryNameByID(int CategoryID) 
@@ -428,38 +365,33 @@ namespace Product_Manager
 
             Console.Clear();
 
-            using (SqlConnection connection =
-            new SqlConnection(connectionString))
+            var categories = Context.Categories.ToList();
+
+
+            Console.WriteLine("Category                     Total products ");
+            Console.WriteLine("------------------------------------------------------------");
+
+            if (categories == null) 
             {
-                SqlCommand command = new SqlCommand(
-                  "SELECT * FROM Categories",
-                  connection);
-                
-                connection.Open();
-
-                SqlDataReader reader = command.ExecuteReader();
+                Console.WriteLine("No rows found.");
+                Thread.Sleep(2000);
+                CategoriesSubMenu();
+            }
 
 
-
-                if (reader.HasRows)
-                {
-                    Console.WriteLine("Category                     Total products ");
-                    Console.WriteLine("------------------------------------------------------------");
+            foreach (var category in categories) 
+            {
+                int productCount = productCountCategory(category.Id);
 
 
-                    while (reader.Read())
-                    {
 
-                     int productCount = productCountCategory(reader["CategoryID"].ToString());
+                Console.Write(category.CategoryName);
+                Console.SetCursorPosition(30, Console.CursorTop);
+                Console.Write(productCount);
+                Console.WriteLine("");
+            }
 
 
-                        
-                        Console.Write(reader["CategoryName"]);
-                        Console.SetCursorPosition(30,Console.CursorTop);
-                        Console.Write(productCount);
-                        Console.WriteLine("");
-
-                    }
 
                     Console.WriteLine(" \n [ESC] Return to categories menu");
 
@@ -481,14 +413,8 @@ namespace Product_Manager
                     }
 
 
-                }
-                else
-                {
-                    Console.WriteLine("No rows found.");
-                }
-                reader.Close();
-                connection.Close();
-            }
+                
+               
         }
         public static void ArticlesSubMenu()
         {
@@ -712,7 +638,15 @@ namespace Product_Manager
             }
 
 
-            Article article = new Article(ArticleNumber: articleNumber, ArticleName: productNameInput, Description: productDescriptionInput, Price: productPriceInputAsNumber);
+            //Article article = new Article(ArticleNumber: articleNumber, ArticleName: productNameInput, Description: productDescriptionInput, Price: productPriceInputAsNumber);
+            Article article = Context.Articles.FirstOrDefault(x => x.ArticleNumber == articleNumber);
+         
+
+            article.setName(productNameInput);
+            article.setDescription(productDescriptionInput);
+            article.setPrice(productPriceInputAsNumber);
+
+
 
 
             if (YesOrNo())
@@ -735,8 +669,9 @@ namespace Product_Manager
             {
 
                 Article article = Context.Articles.FirstOrDefault(x => x.ArticleNumber == articleNumber);
-
+               
                 Context.Remove(article);
+                Context.SaveChanges();
                 Console.WriteLine("\nArticle deleted");
                 Thread.Sleep(2000);
                 ArticlesSubMenu();
