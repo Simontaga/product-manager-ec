@@ -252,6 +252,7 @@ namespace Product_Manager
              SearchProductAddToCategory(CategoryID);
              }
 
+            CategoriesSubMenu();
 
         }
 
