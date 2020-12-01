@@ -1,16 +1,16 @@
 
-#Freaky fashion product manager
+# Freaky fashion product manager
 
 > A product managing application for Freaky Fashion
 
 
-##Requirements
+## Requirements
 
 * Local microsoft SQL Server
 * Visual Studio 2019
 
 
-##Installation
+## Installation
 
 1. Clone the repository
 
